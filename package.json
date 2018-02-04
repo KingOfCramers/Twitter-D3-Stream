@@ -1,0 +1,22 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "Sample mailer",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "csv": "^2.0.0",
+    "express": "^4.16.2",
+    "express-handlebars": "^3.0.0",
+    "json2csv": "^3.11.5",
+    "node-csv": "^0.1.2",
+    "nodemailer": "^4.4.2",
+    "twilio": "^3.11.2",
+    "twitter": "^1.7.1"
+  }
+}

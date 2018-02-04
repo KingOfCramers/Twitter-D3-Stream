@@ -1,0 +1,182 @@
+<!doctype html>
+<html>
+<head>
+<title>Interactive Tree Map</title>
+<meta charset="utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+<link rel="stylesheet" type="text/css" href="/public/css/style.css">
+</head>
+<body>
+</body>
+<script>
+
+var width = 900;
+var height = 500;
+var margin = {top: 10, bottom: 40, left: 45, right: 20}
+
+var svg = d3.select("body").append("svg")
+	.attr("width",width)
+	.attr("height",height) 
+	.style("background-color","lightgrey")
+
+
+var g = svg.append("g")
+		.attr("id","chartGroup")
+		.attr("transform",`translate(${margin.left},${margin.top})`)
+
+var xScale = d3.scaleTime().range([0,width-margin.right-margin.left])	
+var yScale = d3.scaleLinear().range([height-margin.bottom-margin.top,margin.top])
+var xAxis = d3.axisBottom().scale(xScale).ticks(6)
+var yAxis = d3.axisLeft().scale(yScale).ticks(5)
+
+setInterval(function(){
+	d3.queue()
+	    .defer(d3.csv, "public/data/twitterData.csv")
+	    .await(update)
+},5000)
+
+var curLength = 0;
+
+function formatAMPM(date) {
+  var hours = date.getHours();
+  var minutes = date.getMinutes();
+  var ampm = hours >= 12 ? 'pm' : 'am';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // the hour '0' should be '12'
+  minutes = minutes < 10 ? '0'+minutes : minutes;
+  var strTime = hours + ':' + minutes + ' ' + ampm;
+  return strTime;
+}
+
+function toolTip(d){
+
+		var day = d.time.getDate();
+		var year = d.time.getFullYear();
+		var month = d.time.getMonth()
+
+		var timing = `${day}-${month}-${year} at ${formatAMPM(d.time)}`
+
+	d3.select("#tooltip")
+		.html(`<blockquote class='twitter-tweet' data-lang='en'><p lang='en' dir='ltr'>${d.name}\n<a href='${d.URL}'>${timing}</a></p>&mdash;${d.tweet}</blockquote><script async src='https://platform.twitter.com/widgets.js' charset='utf-8'><//script>`)
+		.style("opacity",1)
+
+	d3.select("#tooltip").style("left", () => d3.event.x + 15 + "px")
+	d3.select("#tooltip").style("top", () => d3.event.y + 15 + "px")
+
+}
+
+function buildIt(){
+	d3.csv("public/data/twitterData.csv", function(data){
+		data.forEach(function(d){
+			d.time = new Date(d.time)
+			console.log(d.time)
+			curLength++
+		})
+
+	d3.select("body")
+		.append("div")
+		.attr("id","tooltip")
+    	.attr("pointer-events","none")
+
+	xScale.domain(d3.extent(data, (d,i) => d.time))
+	yScale.domain([0, d3.max(data, (d,i) => i)])
+
+	g.append("g").attr("id","xAxisGroup")
+		.attr("transform", `translate(0,${height-margin.top-margin.bottom})`)
+		.call(xAxis)
+	g.append("g").attr("id","yAxisGroup")
+		.attr("transform", `translate(0,0)`)
+		.call(yAxis)
+
+	svg.selectAll("circle").data(data)
+		.enter()
+		.append("circle")
+		.attr("cx", (d,i) => xScale(d.time))
+		.attr("cy", (d,i) => yScale(i))
+		.attr("r", 3)
+		.attr("transform",`translate(${margin.left},${margin.top})`)
+		.on("mouseover", toolTip)
+	})
+}
+
+buildIt();
+
+
+
+function update(error,data) {
+
+	var newDat = data.slice(curLength);
+
+		if(newDat.length != 0){
+
+				console.log("...updating")
+
+		curLength = curLength + newDat.length;
+
+		data.forEach(function(d){
+			d.time = new Date(d.time)
+		})
+
+		var newTime = newDat[newDat.length-1].time
+		xScale.domain([xScale.domain()[0], newTime])
+		yScale.domain([0,data.length-1])
+
+		d3.select("#xAxisGroup").call(xAxis)
+		d3.select("#yAxisGroup").call(yAxis)
+		
+		console.log(curLength, newDat);
+		
+		var genSel = g.selectAll("circle")
+			.data(data).enter().append("circle")
+
+		d3.selectAll("circle")
+			.attr("cx", (d,i) => xScale(d.time))
+			.attr("cy", (d,i) => yScale(i))
+			.attr("r", 3)
+			.on("mouseover", toolTip)
+
+	}
+
+/*	var earliest = xScale.domain()[0]
+	console.log(earliest)
+	var newest = data[curLength]
+	xScale.domain([])
+
+	var genSel = svg.selectAll("circle").data(data)
+	
+	genSel.enter().data().forEach(function(d){
+		d.time = new Date(d.time);
+	})
+
+	var newTime = new Date(data[newDatLength-1])
+
+	console.log(newTime)
+
+	xScale.domain([earliest, newTime])
+	yScale.domain([1, prevY + 1])
+	var newTime = new Date(data.time)
+
+	
+
+	console.log(allDat,newDat)
+
+	var mostRecent = newData[newData.length-1].time
+	console.log(mostRecent)
+
+
+		
+		.append("circle")
+		.attr("cx", (d,i) => xScale( new Date(d.time)))
+		.attr("cy", (d,i) => yScale(i))
+		.attr("r", 3)
+
+	svg.selectAll("circle")
+		.attr("cx", (d,i) => xScale(new Date(d.time)))
+		.attr("cy", (d,i) => yScale(i))
+		.attr("r", 3)*/
+
+ }
+</script>
+</html>
